@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Milionerzy</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #06091a;
+    --panel: #0d1230;
+    --panel2: #111840;
+    --gold: #D4AF37;
+    --gold2: #f0d060;
+    --blue: #1e5fff;
+    --blue2: #3d7bff;
+    --neon: #00c6ff;
+    --text: #e8eeff;
+    --muted: #6b7a9a;
+    --correct: #22c55e;
+    --wrong: #ef4444;
+    --highlight: #1a2a6c;
+  }
+
+  html, body {
+    height: 100%; width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; flex-direction: column; align-items: center; min-height: 100dvh; width: 100%; }
+  .screen.active { display: flex; }
+
+  /* ══════════════ START SCREEN ══════════════ */
+  #startScreen {
+    background: radial-gradient(ellipse at 50% 30%, #1a2a6c 0%, #06091a 70%);
+    justify-content: center; gap: 0;
+    padding: 24px 20px 40px;
+  }
+
+  .logo-wrapper { text-align: center; margin-bottom: 32px; }
+
+  .logo-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(38px, 12vw, 58px);
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #f0d060 0%, #d4af37 40%, #fff8d0 60%, #d4af37 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(0 0 20px rgba(212,175,55,0.5));
+    line-height: 1;
+  }
+
+  .logo-sub {
+    font-family: 'Oswald', sans-serif;
+    font-size: 15px;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  .prize-preview {
+    background: var(--panel);
+    border: 1px solid rgba(212,175,55,0.2);
+    border-radius: 16px;
+    padding: 20px 24px;
+    width: 100%; max-width: 380px;
+    margin-bottom: 32px;
+  }
+
+  .prize-preview h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .prize-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .prize-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--panel2); border-radius: 8px; }
+  .prize-item .num { font-size: 12px; color: var(--muted); }
+  .prize-item .val { font-family: 'Oswald', sans-serif; font-size: 15px; color: var(--gold); font-weight: 600; }
+  .prize-item.milestone { border: 1px solid rgba(212,175,55,0.4); }
+  .prize-item.milestone .val { color: var(--gold2); }
+
+  .btn-start {
+    background: linear-gradient(135deg, #1e5fff, #0a3bbf);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 18px 48px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 20px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(30,95,255,0.5);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-start:active { transform: scale(0.96); box-shadow: 0 0 15px rgba(30,95,255,0.3); }
+
+  /* ══════════════ GAME SCREEN ══════════════ */
+  #gameScreen {
+    background: radial-gradient(ellipse at 50% 0%, #0d1a40 0%, #06091a 60%);
+    justify-content: flex-start;
+    padding: 0;
+  }
+
+  .game-header {
+    width: 100%; padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(13,18,48,0.9);
+    border-bottom: 1px solid rgba(212,175,55,0.15);
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 10;
+  }
+
+  .current-prize {
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .current-prize .label { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .current-prize .amount {
+    font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .question-counter {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px; color: var(--muted); letter-spacing: 1px;
+  }
+
+  .lifelines {
+    display: flex; gap: 8px;
+  }
+
+  .lifeline-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2px solid rgba(212,175,55,0.4);
+    background: var(--panel2);
+    color: var(--gold);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .lifeline-btn:active { transform: scale(0.9); }
+  .lifeline-btn.used {
+    opacity: 0.25;
+    border-color: transparent;
+    pointer-events: none;
+  }
+
+  .game-body {
+    flex: 1;
+    width: 100%;
+    display: flex; flex-direction: column;
+    padding: 16px;
+    gap: 16px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* Prize ladder strip */
+  .ladder-strip {
+    display: flex; flex-direction: row-reverse;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 4px 0;
+  }
+  .ladder-strip::-webkit-scrollbar { display: none; }
+
+  .ladder-item {
+    flex: 0 0 auto;
+    padding: 4px 8px;
+    background: var(--panel2);
+    border-radius: 6px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    color: var(--muted);
+    border: 1px solid transparent;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+  .ladder-item.current {
+    background: linear-gradient(135deg, #1e3a8a, #1e5fff);
+    color: #fff;
+    border-color: var(--blue2);
+    box-shadow: 0 0 12px rgba(30,95,255,0.5);
+  }
+  .ladder-item.passed { color: var(--gold); border-color: rgba(212,175,55,0.3); }
+  .ladder-item.milestone.passed { color: var(--gold2); border-color: var(--gold); background: rgba(212,175,55,0.1); }
+
+  /* Question box */
+  .question-box {
+    background: var(--panel);
+    border: 1px solid rgba(30,95,255,0.3);
+    border-radius: 16px;
+    padding: 20px 18px;
+    text-align: center;
+    min-height: 110px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .question-box::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(30,95,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .question-number {
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+  }
+
+  .question-text {
+    font-size: clamp(15px, 4vw, 18px);
+    line-height: 1.5;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  /* Answers */
+  .answers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .answer-btn {
+    background: var(--panel);
+    border: 1.5px solid rgba(30,95,255,0.35);
+    border-radius: 12px;
+    padding: 14px 12px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    min-height: 60px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+    line-height: 1.3;
+  }
+
+  .answer-btn .letter {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--blue2);
+    flex-shrink: 0;
+  }
+
+  .answer-btn:active:not(:disabled) {
+    transform: scale(0.97);
+    border-color: var(--blue2);
+    background: rgba(30,95,255,0.15);
+  }
+
+  .answer-btn.selected {
+    border-color: var(--gold);
+    background: rgba(212,175,55,0.1);
+    animation: pulse-gold 0.6s ease;
+  }
+
+  .answer-btn.correct {
+    border-color: var(--correct);
+    background: rgba(34,197,94,0.18);
+    color: #fff;
+  }
+  .answer-btn.correct .letter { color: var(--correct); }
+
+  .answer-btn.wrong {
+    border-color: var(--wrong);
+    background: rgba(239,68,68,0.18);
+    color: rgba(255,255,255,0.5);
+  }
+  .answer-btn.wrong .letter { color: var(--wrong); }
+
+  .answer-btn.hidden {
+    opacity: 0.2;
+    pointer-events: none;
+  }
+
+  .answer-btn:disabled { cursor: default; }
+
+  @keyframes pulse-gold {
+    0% { box-shadow: 0 0 0 0 rgba(212,175,55,0.6); }
+    70% { box-shadow: 0 0 0 12px rgba(212,175,55,0); }
+    100% { box-shadow: none; }
+  }
+
+  /* Confirm bar */
+  .confirm-bar {
+    display: none;
+    gap: 10px;
+    width: 100%;
+  }
+  .confirm-bar.visible { display: flex; }
+
+  .btn-confirm, .btn-cancel {
+    flex: 1; padding: 14px;
+    border: none; border-radius: 12px;
+    font-family: 'Oswald', sans-serif; font-size: 16px; letter-spacing: 2px;
+    cursor: pointer; transition: transform 0.15s;
+    text-transform: uppercase;
+  }
+  .btn-confirm {
+    background: linear-gradient(135deg, var(--blue), var(--blue2));
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(30,95,255,0.4);
+  }
+  .btn-cancel {
+    background: var(--panel2);
+    color: var(--muted);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .btn-confirm:active { transform: scale(0.97); }
+  .btn-cancel:active { transform: scale(0.97); }
+
+  /* ══════════════ OVERLAY modals ══════════════ */
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(6,9,26,0.88); backdrop-filter: blur(6px);
+    z-index: 100; align-items: center; justify-content: center; padding: 20px;
+  }
+  .overlay.active { display: flex; }
+
+  .modal {
+    background: var(--panel);
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 20px;
+    padding: 28px 24px;
+    width: 100%; max-width: 380px;
+    text-align: center;
+  }
+
+  .modal h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 26px; letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .modal .subtitle { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+
+  .phone-advice, .audience-bars {
+    background: var(--panel2);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+  }
+
+  .phone-advice { font-size: 15px; line-height: 1.6; font-style: italic; color: var(--text); }
+
+  .audience-bars { display: flex; gap: 8px; align-items: flex-end; height: 100px; }
+  .audience-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .audience-bar {
+    width: 100%; background: linear-gradient(to top, var(--blue), var(--blue2));
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+    transition: height 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .audience-bar-label { font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 700; color: var(--gold); }
+  .audience-bar-pct { font-size: 11px; color: var(--muted); }
+
+  .btn-modal {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--blue), var(--blue2));
+    color: #fff; border: none; border-radius: 12px;
+    font-family: 'Oswald', sans-serif; font-size: 16px; letter-spacing: 2px;
+    text-transform: uppercase; cursor: pointer;
+    margin-top: 8px;
+  }
+  .btn-modal:active { opacity: 0.85; }
+
+  /* ══════════════ END SCREEN ══════════════ */
+  #endScreen {
+    background: radial-gradient(ellipse at 50% 30%, #1a1000 0%, #06091a 70%);
+    justify-content: center; gap: 0; padding: 32px 20px 48px;
+  }
+
+  .end-icon { font-size: 64px; margin-bottom: 12px; }
+
+  .end-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(28px, 9vw, 42px);
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .end-title.win {
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .end-title.lose { color: var(--wrong); }
+
+  .end-prize-label { font-size: 13px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 20px; }
+  .end-prize-value {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(42px, 13vw, 64px);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 4px;
+  }
+
+  .end-correct-answer { font-size: 14px; color: var(--muted); margin: 8px 0 24px; line-height: 1.5; }
+  .end-correct-answer span { color: var(--correct); font-weight: 600; }
+
+  .btn-again {
+    background: linear-gradient(135deg, var(--blue), var(--blue2));
+    color: #fff; border: none; border-radius: 50px;
+    padding: 16px 44px;
+    font-family: 'Oswald', sans-serif; font-size: 18px; letter-spacing: 3px;
+    text-transform: uppercase; cursor: pointer;
+    box-shadow: 0 0 30px rgba(30,95,255,0.4);
+    margin-top: 8px;
+  }
+  .btn-again:active { transform: scale(0.96); }
+
+  /* Result flash overlay */
+  .result-flash {
+    position: fixed; inset: 0; z-index: 200;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .result-flash.correct-flash { background: rgba(34,197,94,0.12); }
+  .result-flash.wrong-flash { background: rgba(239,68,68,0.15); }
+  .result-flash.show { opacity: 1; }
+
+  /* Walk away btn */
+  .btn-walkaway {
+    width: 100%; padding: 12px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif; font-size: 13px;
+    cursor: pointer; letter-spacing: 1px;
+  }
+  .btn-walkaway:active { color: var(--gold); border-color: rgba(212,175,55,0.3); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--panel2); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 10px 20px;
+    font-size: 14px; color: var(--text); z-index: 300;
+    opacity: 0; transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ START SCREEN ═══════════ -->
+<div class="screen active" id="startScreen">
+  <div class="logo-wrapper">
+    <div class="logo-title">Milionerzy</div>
+    <div class="logo-sub">Kto chce zostać milionerem?</div>
+  </div>
+
+  <div class="prize-preview">
+    <h3>Drabinka wygranych</h3>
+    <div class="prize-grid" id="prizePreviewGrid"></div>
+  </div>
+
+  <button class="btn-start" onclick="startGame()">Zagraj teraz</button>
+</div>
+
+<!-- ═══════════ GAME SCREEN ═══════════ -->
+<div class="screen" id="gameScreen">
+  <div class="game-header">
+    <div class="current-prize">
+      <span class="label">Wygrałeś</span>
+      <span class="amount" id="currentPrize">0 zł</span>
+    </div>
+    <div class="question-counter" id="questionCounter">Pyt. 1/15</div>
+    <div class="lifelines">
+      <button class="lifeline-btn" id="ll5050" onclick="useLifeline('5050')" title="50/50">½</button>
+      <button class="lifeline-btn" id="llPhone" onclick="useLifeline('phone')" title="Telefon do przyjaciela">📞</button>
+      <button class="lifeline-btn" id="llAudience" onclick="useLifeline('audience')" title="Głos publiczności">👥</button>
+    </div>
+  </div>
+
+  <div class="game-body">
+    <div class="ladder-strip" id="ladderStrip"></div>
+
+    <div class="question-box">
+      <div class="question-number" id="questionNum">Pytanie 1 z 15</div>
+      <div class="question-text" id="questionText">Ładowanie pytania...</div>
+    </div>
+
+    <div class="answers-grid" id="answersGrid"></div>
+
+    <div class="confirm-bar" id="confirmBar">
+      <button class="btn-cancel" onclick="cancelAnswer()">Zmień</button>
+      <button class="btn-confirm" onclick="confirmAnswer()">Ostateczna!</button>
+    </div>
+
+    <button class="btn-walkaway" onclick="walkAway()">Odejdź z wygraną</button>
+  </div>
+</div>
+
+<!-- ═══════════ END SCREEN ═══════════ -->
+<div class="screen" id="endScreen">
+  <div class="end-icon" id="endIcon">🏆</div>
+  <div class="end-title" id="endTitle">Gratulacje!</div>
+  <div class="end-prize-label" id="endPrizeLabel">Twoja wygrana</div>
+  <div class="end-prize-value" id="endPrizeValue">0 zł</div>
+  <div class="end-correct-answer" id="endCorrectAnswer"></div>
+  <button class="btn-again" onclick="startGame()">Zagraj jeszcze raz</button>
+</div>
+
+<!-- ═══════════ OVERLAYS ═══════════ -->
+<div class="overlay" id="phoneOverlay">
+  <div class="modal">
+    <h2>📞 Telefon</h2>
+    <div class="subtitle">Twój znajomy mówi...</div>
+    <div class="phone-advice" id="phoneAdvice"></div>
+    <button class="btn-modal" onclick="closeOverlay('phoneOverlay')">Dziękuję!</button>
+  </div>
+</div>
+
+<div class="overlay" id="audienceOverlay">
+  <div class="modal">
+    <h2>👥 Publiczność</h2>
+    <div class="subtitle">Wyniki głosowania</div>
+    <div class="audience-bars" id="audienceBars"></div>
+    <button class="btn-modal" onclick="closeOverlay('audienceOverlay')">Dziękuję!</button>
+  </div>
+</div>
+
+<!-- Flash & Toast -->
+<div class="result-flash" id="resultFlash"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+//  DANE
+// ═══════════════════════════════════════
+
+const PRIZES = [
+  { val: 500, label: '500 zł', milestone: false },
+  { val: 1000, label: '1 000 zł', milestone: false },
+  { val: 2000, label: '2 000 zł', milestone: false },
+  { val: 5000, label: '5 000 zł', milestone: false },
+  { val: 10000, label: '10 000 zł', milestone: true },
+  { val: 20000, label: '20 000 zł', milestone: false },
+  { val: 40000, label: '40 000 zł', milestone: false },
+  { val: 75000, label: '75 000 zł', milestone: false },
+  { val: 125000, label: '125 000 zł', milestone: false },
+  { val: 250000, label: '250 000 zł', milestone: true },
+  { val: 500000, label: '500 000 zł', milestone: false },
+  { val: 750000, label: '750 000 zł', milestone: false },
+  { val: 1000000, label: '1 000 000 zł', milestone: false },
+  { val: 2000000, label: '2 000 000 zł', milestone: false },
+  { val: 5000000, label: '5 000 000 zł', milestone: true },
+];
+
+const GUARANTEED = [0, 10000, 250000]; // gwarancje przy odejściu/przegranej
+
+const ALL_QUESTIONS = [
+  // Łatwe (1-5)
+  { q: "Ile nóg ma pies?", a: ["2", "4", "6", "8"], c: 1 },
+  { q: "Jaki kolor ma dojrzały banan?", a: ["Czerwony", "Zielony", "Żółty", "Niebieski"], c: 2 },
+  { q: "Ile dni ma tydzień?", a: ["5", "6", "7", "8"], c: 2 },
+  { q: "Który ocean jest największy?", a: ["Atlantycki", "Indyjski", "Arktyczny", "Spokojny"], c: 3 },
+  { q: "Jak nazywa się stolica Francji?", a: ["Lyon", "Marsylia", "Paryż", "Nicea"], c: 2 },
+  // Średnie (6-10)
+  { q: "W którym roku Neil Armstrong stanął na Księżycu?", a: ["1965", "1969", "1972", "1975"], c: 1 },
+  { q: "Ile planet ma Układ Słoneczny?", a: ["7", "8", "9", "10"], c: 1 },
+  { q: "Kto napisał 'Pana Tadeusza'?", a: ["Juliusz Słowacki", "Cyprian Norwid", "Adam Mickiewicz", "Henryk Sienkiewicz"], c: 2 },
+  { q: "Jak nazywa się najdłuższa rzeka świata?", a: ["Amazonka", "Jangcy", "Nil", "Missisipi"], c: 2 },
+  { q: "Ile sekund ma jedna minuta?", a: ["10", "50", "60", "100"], c: 2 },
+  // Trudne (11-15)
+  { q: "W jakim roku Polska wstąpiła do Unii Europejskiej?", a: ["1999", "2002", "2004", "2007"], c: 2 },
+  { q: "Który pierwiastek chemiczny ma symbol 'Fe'?", a: ["Fluor", "Żelazo", "Fosfor", "Francium"], c: 1 },
+  { q: "Jak nazywa się najwyższy szczyt Afryki?", a: ["Mont Blanc", "Kilimandżaro", "Mount Kenya", "Ras Dashen"], c: 1 },
+  { q: "Kto namalował 'Ostatnią Wieczerzę'?", a: ["Michał Anioł", "Rafael Santi", "Caravaggio", "Leonardo da Vinci"], c: 3 },
+  { q: "Ile kości ma ludzki szkielet dorosłego człowieka?", a: ["163", "186", "206", "248"], c: 2 },
+  // Dodatkowe
+  { q: "Jaki jest symbol chemiczny wody?", a: ["CO2", "H2O", "NaCl", "O2"], c: 1 },
+  { q: "Ile godzin ma doba?", a: ["12", "18", "24", "48"], c: 2 },
+  { q: "Kto był pierwszym prezesem USA?", a: ["Abraham Lincoln", "Thomas Jefferson", "George Washington", "Benjamin Franklin"], c: 2 },
+  { q: "Ile stron ma trójkąt?", a: ["2", "3", "4", "5"], c: 1 },
+  { q: "Jak nazywa się stolica Japonii?", a: ["Pekin", "Seul", "Osaka", "Tokio"], c: 3 },
+  { q: "Który kraj ma największą populację?", a: ["USA", "Indie", "Chiny", "Rosja"], c: 1 },
+  { q: "Jak nazywa się góra, na której znajduje się najwyższy szczyt świata?", a: ["K2", "Kanczendzonga", "Mont Everest", "Makalu"], c: 2 },
+  { q: "Ile liter ma polski alfabet?", a: ["24", "26", "32", "35"], c: 2 },
+  { q: "Co to jest DNA?", a: ["Białko", "Kwas nukleinowy", "Lipid", "Węglowodan"], c: 1 },
+  { q: "Ile wynosi suma kątów wewnętrznych trójkąta?", a: ["90°", "180°", "270°", "360°"], c: 1 },
+  { q: "W jakim kraju urodził się Fryderyk Chopin?", a: ["Francja", "Austria", "Polska", "Niemcy"], c: 2 },
+  { q: "Jak nazywa się największy ssak morski?", a: ["Delfin", "Rekin wielorybi", "Płetwal błękitny", "Kaszalot"], c: 2 },
+  { q: "Ile nóg ma pająk?", a: ["4", "6", "8", "10"], c: 2 },
+  { q: "Jaka jest stolica Australii?", a: ["Sydney", "Melbourne", "Brisbane", "Canberra"], c: 3 },
+  { q: "Kto napisał 'Zbrodnie i Karę'?", a: ["Tołstoj", "Turgienjew", "Dostojewski", "Czechow"], c: 2 },
+];
+
+// ═══════════════════════════════════════
+//  STAN GRY
+// ═══════════════════════════════════════
+let state = {};
+
+function freshState() {
+  return {
+    questionIdx: 0,
+    questions: [],
+    selectedAnswer: null,
+    lifelines: { '5050': true, phone: true, audience: true },
+    locked: false,
+    hiddenAnswers: [],
+  };
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+function buildPrizePreview() {
+  const grid = document.getElementById('prizePreviewGrid');
+  grid.innerHTML = '';
+  // show last 10
+  const show = PRIZES.slice(5).reverse();
+  show.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'prize-item' + (p.milestone ? ' milestone' : '');
+    d.innerHTML = `<span class="num">${15 - i}</span><span class="val">${p.label}</span>`;
+    grid.appendChild(d);
+  });
+}
+
+function pickQuestions() {
+  // Pick 15 shuffled questions
+  const pool = [...ALL_QUESTIONS];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, 15);
+}
+
+function startGame() {
+  state = freshState();
+  state.questions = pickQuestions();
+
+  // Reset lifelines
+  ['5050', 'Phone', 'Audience'].forEach(id => {
+    const el = document.getElementById('ll' + id);
+    if (el) el.classList.remove('used');
+  });
+
+  buildLadder();
+  showScreen('gameScreen');
+  loadQuestion();
+}
+
+// ═══════════════════════════════════════
+//  LADDER
+// ═══════════════════════════════════════
+function buildLadder() {
+  const strip = document.getElementById('ladderStrip');
+  strip.innerHTML = '';
+  PRIZES.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'ladder-item' + (p.milestone ? ' milestone' : '');
+    d.id = 'ladder' + i;
+    d.textContent = p.label;
+    strip.appendChild(d);
+  });
+  updateLadder();
+}
+
+function updateLadder() {
+  PRIZES.forEach((_, i) => {
+    const el = document.getElementById('ladder' + i);
+    el.classList.remove('current', 'passed');
+    if (i < state.questionIdx) el.classList.add('passed');
+    else if (i === state.questionIdx) {
+      el.classList.add('current');
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  });
+}
+
+// ═══════════════════════════════════════
+//  QUESTIONS
+// ═══════════════════════════════════════
+function loadQuestion() {
+  const q = state.questions[state.questionIdx];
+  state.selectedAnswer = null;
+  state.locked = false;
+  state.hiddenAnswers = [];
+
+  document.getElementById('questionNum').textContent = `Pytanie ${state.questionIdx + 1} z 15`;
+  document.getElementById('questionCounter').textContent = `Pyt. ${state.questionIdx + 1}/15`;
+  document.getElementById('questionText').textContent = q.q;
+  document.getElementById('currentPrize').textContent = state.questionIdx > 0 ? PRIZES[state.questionIdx - 1].label : '0 zł';
+
+  document.getElementById('confirmBar').classList.remove('visible');
+
+  renderAnswers(q);
+  updateLadder();
+}
+
+const LETTERS = ['A', 'B', 'C', 'D'];
+
+function renderAnswers(q) {
+  const grid = document.getElementById('answersGrid');
+  grid.innerHTML = '';
+  q.a.forEach((text, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn' + (state.hiddenAnswers.includes(i) ? ' hidden' : '');
+    btn.id = 'ans' + i;
+    btn.innerHTML = `<span class="letter">${LETTERS[i]}:</span> ${text}`;
+    btn.onclick = () => selectAnswer(i);
+    grid.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx) {
+  if (state.locked) return;
+  if (state.hiddenAnswers.includes(idx)) return;
+
+  state.selectedAnswer = idx;
+
+  document.querySelectorAll('.answer-btn').forEach((btn, i) => {
+    btn.classList.remove('selected');
+  });
+  document.getElementById('ans' + idx).classList.add('selected');
+  document.getElementById('confirmBar').classList.add('visible');
+}
+
+function cancelAnswer() {
+  state.selectedAnswer = null;
+  document.querySelectorAll('.answer-btn').forEach(btn => btn.classList.remove('selected'));
+  document.getElementById('confirmBar').classList.remove('visible');
+}
+
+function confirmAnswer() {
+  if (state.selectedAnswer === null || state.locked) return;
+  state.locked = true;
+
+  const q = state.questions[state.questionIdx];
+  const correct = q.c;
+  const chosen = state.selectedAnswer;
+
+  document.getElementById('confirmBar').classList.remove('visible');
+  document.querySelectorAll('.answer-btn').forEach(btn => btn.disabled = true);
+
+  setTimeout(() => {
+    const chosenBtn = document.getElementById('ans' + chosen);
+    const correctBtn = document.getElementById('ans' + correct);
+
+    if (chosen === correct) {
+      chosenBtn.classList.remove('selected');
+      chosenBtn.classList.add('correct');
+      flashScreen('correct');
+      setTimeout(() => nextQuestion(), 1400);
+    } else {
+      chosenBtn.classList.remove('selected');
+      chosenBtn.classList.add('wrong');
+      correctBtn.classList.add('correct');
+      flashScreen('wrong');
+      setTimeout(() => endGame(false, q), 1800);
+    }
+  }, 600);
+}
+
+function nextQuestion() {
+  state.questionIdx++;
+  if (state.questionIdx >= 15) {
+    endGame(true);
+  } else {
+    loadQuestion();
+  }
+}
+
+// ═══════════════════════════════════════
+//  LIFELINES
+// ═══════════════════════════════════════
+function useLifeline(type) {
+  if (!state.lifelines[type] || state.locked) return;
+
+  if (state.selectedAnswer !== null) {
+    showToast('Najpierw anuluj wybór, aby użyć koła ratunkowego');
+    return;
+  }
+
+  state.lifelines[type] = false;
+
+  const q = state.questions[state.questionIdx];
+
+  if (type === '5050') {
+    document.getElementById('ll5050').classList.add('used');
+    const wrong = [];
+    q.a.forEach((_, i) => { if (i !== q.c) wrong.push(i); });
+    shuffle(wrong);
+    const toHide = wrong.slice(0, 2);
+    state.hiddenAnswers = toHide;
+    toHide.forEach(i => document.getElementById('ans' + i).classList.add('hidden'));
+  }
+
+  if (type === 'phone') {
+    document.getElementById('llPhone').classList.add('used');
+    const advice = generatePhoneAdvice(q);
+    document.getElementById('phoneAdvice').textContent = advice;
+    openOverlay('phoneOverlay');
+  }
+
+  if (type === 'audience') {
+    document.getElementById('llAudience').classList.add('used');
+    const votes = generateAudienceVotes(q);
+    renderAudienceBars(votes, q.a);
+    openOverlay('audienceOverlay');
+  }
+}
+
+function generatePhoneAdvice(q) {
+  const r = Math.random();
+  const answer = q.a[q.c];
+  const letters = LETTERS;
+  if (r < 0.65) {
+    return `Słuchaj, jestem prawie pewien… Myślę, że odpowiedź to ${letters[q.c]}: "${answer}". Tak, tak! Ale sprawdź jeszcze sam.`;
+  } else if (r < 0.85) {
+    return `Hmm… trudne pytanie. Wydaje mi się, że to ${letters[q.c]}, ale nie jestem w stu procentach pewny. Zaufaj swojej intuicji!`;
+  } else {
+    const wrongIdx = q.a.findIndex((_, i) => i !== q.c);
+    return `O rany, nie mam pojęcia… Może ${letters[wrongIdx]}? Albo ${letters[q.c]}? Przepraszam, nie wiem tego na pewno!`;
+  }
+}
+
+function generateAudienceVotes(q) {
+  const votes = [0, 0, 0, 0];
+  const correct = q.c;
+  const r = Math.random();
+  let mainVotes, rest;
+  if (r < 0.5) { mainVotes = 55 + Math.floor(Math.random() * 30); }
+  else if (r < 0.8) { mainVotes = 40 + Math.floor(Math.random() * 20); }
+  else { mainVotes = 20 + Math.floor(Math.random() * 20); }
+  votes[correct] = mainVotes;
+  rest = 100 - mainVotes;
+  const others = [0, 1, 2, 3].filter(i => i !== correct);
+  let remaining = rest;
+  others.forEach((i, idx) => {
+    if (idx === others.length - 1) { votes[i] = remaining; }
+    else { const v = Math.floor(Math.random() * (remaining - (others.length - idx - 1))); votes[i] = v; remaining -= v; }
+  });
+  return votes;
+}
+
+function renderAudienceBars(votes, answers) {
+  const container = document.getElementById('audienceBars');
+  container.innerHTML = '';
+  const max = Math.max(...votes);
+  votes.forEach((v, i) => {
+    const h = max > 0 ? Math.round((v / max) * 72) : 0;
+    const wrap = document.createElement('div');
+    wrap.className = 'audience-bar-wrap';
+    wrap.innerHTML = `
+      <div class="audience-bar" style="height:${h}px"></div>
+      <div class="audience-bar-label">${LETTERS[i]}</div>
+      <div class="audience-bar-pct">${v}%</div>
+    `;
+    container.appendChild(wrap);
+  });
+}
+
+// ═══════════════════════════════════════
+//  WALK AWAY
+// ═══════════════════════════════════════
+function walkAway() {
+  const prize = state.questionIdx > 0 ? PRIZES[state.questionIdx - 1] : { val: 0, label: '0 zł' };
+  if (confirm(`Odejść z ${prize.label}?`)) {
+    showEnd('walk', null, prize);
+  }
+}
+
+// ═══════════════════════════════════════
+//  END GAME
+// ═══════════════════════════════════════
+function endGame(win, failedQ) {
+  if (win) {
+    showEnd('win', null, PRIZES[14]);
+  } else {
+    // guaranteed prize
+    let guaranteed = { val: 0, label: '0 zł' };
+    GUARANTEED.forEach(g => {
+      const gIdx = PRIZES.findIndex(p => p.val === g);
+      if (gIdx !== -1 && gIdx < state.questionIdx) guaranteed = PRIZES[gIdx];
+    });
+    showEnd('lose', failedQ, guaranteed);
+  }
+}
+
+function showEnd(type, failedQ, prize) {
+  const icon = document.getElementById('endIcon');
+  const title = document.getElementById('endTitle');
+  const prizeVal = document.getElementById('endPrizeValue');
+  const correctAns = document.getElementById('endCorrectAnswer');
+  const label = document.getElementById('endPrizeLabel');
+
+  if (type === 'win') {
+    icon.textContent = '🏆';
+    title.textContent = 'MILIONER!';
+    title.className = 'end-title win';
+    label.textContent = 'Wygrałeś';
+    correctAns.textContent = '';
+  } else if (type === 'walk') {
+    icon.textContent = '👋';
+    title.textContent = 'Do widzenia!';
+    title.className = 'end-title win';
+    label.textContent = 'Odchodzisz z';
+    correctAns.textContent = 'Dobra decyzja!';
+  } else {
+    icon.textContent = '😔';
+    title.textContent = 'Niestety...';
+    title.className = 'end-title lose';
+    label.textContent = 'Twoja wygrana';
+    if (failedQ) {
+      correctAns.innerHTML = `Poprawna odpowiedź: <span>${LETTERS[failedQ.c]}: ${failedQ.a[failedQ.c]}</span>`;
+    }
+  }
+
+  prizeVal.textContent = prize.label;
+  showScreen('endScreen');
+}
+
+// ═══════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function openOverlay(id) {
+  document.getElementById(id).classList.add('active');
+}
+
+function closeOverlay(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function flashScreen(type) {
+  const el = document.getElementById('resultFlash');
+  el.className = 'result-flash ' + (type === 'correct' ? 'correct-flash' : 'wrong-flash');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 500);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ═══════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════
+buildPrizePreview();
+</script>
+</body>
+</html>
